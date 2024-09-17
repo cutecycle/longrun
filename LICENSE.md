@@ -1,0 +1,1 @@
+Written during a hackathon, and thus license and ownership is speculative -- under full ownership of Microsoft Corporation 
