@@ -1,13 +1,28 @@
+# Goal
+If your language has lambads, your language has LongRun.
 # Task 
 ```json
 
 {
+    //immutable
     "Name": "",
-    "Id": "",
-    "CorrelationId": "",
+    "TaskId": "",
+    "StateId": "",
     "StartTime": "", 
-    "EndTime": "",
-    "Status": 200,
     "Version": 0
+
+    //Mutable only upon completion
+    "EndTime": "",
+    "Status": 200
+    
 }
 ```
+
+# State
+
+State is like a CorrelationId, but also a Context.
+
+```json
+
+```
+
