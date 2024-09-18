@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.38"
+http = "1.1.0"
+paginate = "1.1.11"
+uuid = { version = "1.10.0", features = ["v4"] } 

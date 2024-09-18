@@ -1,5 +1,20 @@
-# Goal
-If your language has lambads, your language has LongRun.
+
+
+# StateStore 
+StateStore interface holds program state, and program state is defined by "the set of every persistent variable." it should be compatible with any system that can store a key and a value, including but not limited to rdbms, kv stores, local filesystem, blob storage, etc.
+
+
+# Variable 
+
+
+
+```json
+{
+    
+}
+```
+
+
 # Task 
 ```json
 
@@ -17,12 +32,3 @@ If your language has lambads, your language has LongRun.
     
 }
 ```
-
-# State
-
-State is like a CorrelationId, but also a Context.
-
-```json
-
-```
-
