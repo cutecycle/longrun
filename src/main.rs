@@ -2,101 +2,173 @@
 //     fn run<T>(&self, input: T) -> T;
 
 use core::task;
+use std::future;
 
 // }
 use chrono::Utc;
 use http::status::StatusCode;
-use longrun::{StateStore, Task};
-use uuid::Uuid;
+use longrun::{InMemoryStateStore, StateStore, Task};
 use paginate::Pages;
+use uuid::Uuid;
+
+static IMPLEMENTATION_VERSION: i32 = 0;
 
 mod longrun {
-    use std::collections::HashMap;
-    pub enum States { 
+    use core::fmt;
+    // use once_cell::sync::Lazy;
+    use std::sync::Mutex;
+    use std::{collections::HashMap, env};
+
+    use crate::IMPLEMENTATION_VERSION;
+    #[derive(Clone)]
+    pub enum States {
         Pending,
         Running,
         Completed,
         Failed,
         Timeout,
-        Cancelled,
+        Canceled,
     }
 
-    pub trait StateStore {
-        fn get_state<T>(&self, key: String) -> T;
-        fn set_state<T>(&self, key: String, value: T);
-        fn new_task<T>(&self, name: String, description: String) -> Task;
-        fn load_task<T>(&self, id: uuid::Uuid) -> Task;
+    #[derive(Clone)]
+    pub struct Error {
+        message: String,
+        preferred_status: States,
     }
 
-    pub struct InMemoryStateStore {
-        tasks: HashMap<uuid::Uuid, Task>,
+    impl fmt::Debug for Error {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "Error: {}", self.message)
+        }
     }
 
-    impl InMemoryStateStore {
-        pub fn new() -> InMemoryStateStore {
+    pub trait StateStore<T> {
+        async fn get_state(&self, key: String) -> T;
+        async fn set_state(&self, key: String, value: T);
+        async fn new_task(&self, name: String, description: String) -> Task<T>;
+
+        async fn load_task(&self, id: uuid::Uuid) -> Task<T>;
+        async fn get_tasks(&self) -> Vec<Task<T>>;
+    }
+
+    pub struct InMemoryStateStore<T> {
+        tasks: HashMap<uuid::Uuid, Task<T>>,
+    }
+
+    impl<T> InMemoryStateStore<T> {
+        pub async fn new() -> InMemoryStateStore<T> {
             InMemoryStateStore {
                 tasks: HashMap::new(),
             }
         }
     }
 
-    impl StateStore for InMemoryStateStore {
-        fn get_state<T>(&self, key: String) -> T {
+    impl<T> StateStore<T> for InMemoryStateStore<T> {
+        async fn get_state(&self, key: String) -> T {
             todo!()
         }
 
-        fn set_state<T>(&self, key: String, value: T) {
+        async fn set_state(&self, key: String, value: T) {
             todo!()
         }
 
-        fn new_task<T>(&self, name: String, description: String) -> Task {
+        async fn new_task(&self, name: String, description: String) -> Task<T> {
             todo!()
         }
 
-        fn load_task<T>(&self, id: uuid::Uuid) -> Task {
+        async fn load_task(&self, id: uuid::Uuid) -> Task<T> {
             todo!()
         }
-    }gi
+
+        async fn get_tasks(&self) -> Vec<Task<T>> {
+            todo!()
+        }
+    }
 
     // pub struct value
-    pub struct Task {
+    pub struct Task<T> {
         name: String,
         id: uuid::Uuid,
         description: String,
-        status: http::status::StatusCode,
+        status: States,
         start_time: chrono::DateTime<chrono::Utc>,
         end_time: chrono::DateTime<chrono::Utc>,
-        run: fn(),
-        // pub fn run<T>(&self, input: T) -> T {
-        //     // Task
-        // }
+        execute: fn() -> T,
+        implementation: Implementation,
     }
 
-    impl Task {
-        pub fn new(name: String, description: String, run: fn()) -> Task {
+    pub struct Implementation {
+        spec_version: i32,
+        operating_system: String,
+        language: String,
+        version: i32,
+    }
+
+    impl Implementation {
+        pub fn new() -> Implementation {
+            Implementation {
+                spec_version: 0,
+                language: env::consts::ARCH.to_string(),
+                version: 0,
+                operating_system: env::consts::OS.to_string(),
+            }
+        }
+    }
+
+    impl<T> Task<T> {
+        pub fn new(name: String, description: String, run: fn() -> T) -> Task<T> {
             Task {
                 name: name,
                 id: uuid::Uuid::new_v4(),
                 description: description,
-                status: http::status::StatusCode::OK,
+                status: States::Pending,
                 start_time: chrono::Utc::now(),
                 end_time: chrono::Utc::now(),
-                run: run,
+                execute: run,
+                implementation: Implementation::new(),
             }
+        }
+        pub fn get_name(&self) -> String {
+            self.name.clone()
+        }
+
+        pub async fn run(&mut self) -> T {
+            self.status = States::Running;
+
+            let result: Result<T, Error> = || -> Result<T, Error> {
+                let return_value = (self.execute)();
+                self.status = States::Completed;
+                Ok(return_value)
+            }();
+
+            self.status = match result {
+                Ok(_) => States::Completed,
+                Err(_) => States::Failed,
+            };
+
+            return result.unwrap();
         }
     }
 }
+
+async fn doit() {
+    let store: InMemoryStateStore<i32> = longrun::InMemoryStateStore::new().await;
+
+    let mut task: Task<i32> = Task::new("Task1".to_string(), "This is a task".to_string(), || {
+        println!("Task1");
+        return 1;
+    });
+
+    //print tasks
+    let tasks = store.get_tasks().await;
+    for task in tasks {
+        println!("Task: {}", task.get_name());
+    }
+
+    let x = task.run().await;
+    println!("Task1 returned: {}", x);
+}
 fn main() {
     // Task
-    let store = longrun::InMemoryStateStore::new();
-
-    // let task = store.new_task("Task1".to_string());
-
-    let task: Task = Task::new(
-        "Task1".to_string(),
-        "This is a task".to_string(),
-        || {
-            println!("Task1");
-        },
-    );
+    futures::executor::block_on(doit());
 }
