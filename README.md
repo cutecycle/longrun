@@ -29,6 +29,10 @@ StateStore interface holds program state, and program state is defined by "the s
 
 
 ## Task 
+
+Task is an object created by the StateStore that either references a newly created task or an existing task. it consists primarily of a name, TaskId, and the function to execute.
+
+
 ```json
 
 {

@@ -17,6 +17,7 @@ mod longrun {
     use core::fmt;
     // use once_cell::sync::Lazy;
     use std::sync::Mutex;
+    use std::task;
     use std::{collections::HashMap, env};
 
     use crate::IMPLEMENTATION_VERSION;
@@ -42,7 +43,10 @@ mod longrun {
         }
     }
 
-    pub trait StateStore<T> {
+    pub trait StateStore<T>
+    where
+        T: Clone + Send + Sync,
+    {
         async fn get_state(&self, key: String) -> T;
         async fn set_state(&self, key: String, value: T);
         async fn new_task(&self, name: String, description: String) -> Task<T>;
@@ -65,23 +69,29 @@ mod longrun {
         }
     }
 
-    impl<T> StateStore<T> for InMemoryStateStore<T> {
+    impl<T> StateStore<T> for InMemoryStateStore<T>
+    where
+        T: Clone + Send + Sync,
+    {
         async fn get_state(&self, key: String) -> T {
-            self.variables.get
+            // return self.variables.get(key).unwrap();
+            //create future
+            async_std::task::sleep(std::time::Duration::from_secs(2)).await;
+            return self.variables.get(&key).unwrap().clone();
         }
-    
+
         async fn set_state(&self, key: String, value: T) {
             todo!()
         }
-    
+
         async fn new_task(&self, name: String, description: String) -> Task<T> {
             todo!()
         }
-    
+
         async fn load_task(&self, id: uuid::Uuid) -> Task<T> {
             todo!()
         }
-    
+
         async fn get_tasks(&self) -> Vec<Task<T>> {
             todo!()
         }
