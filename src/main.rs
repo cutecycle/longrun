@@ -53,33 +53,35 @@ mod longrun {
 
     pub struct InMemoryStateStore<T> {
         tasks: HashMap<uuid::Uuid, Task<T>>,
+        variables: HashMap<String, T>,
     }
 
     impl<T> InMemoryStateStore<T> {
         pub async fn new() -> InMemoryStateStore<T> {
             InMemoryStateStore {
                 tasks: HashMap::new(),
+                variables: HashMap::new(),
             }
         }
     }
 
     impl<T> StateStore<T> for InMemoryStateStore<T> {
         async fn get_state(&self, key: String) -> T {
-            todo!()
+            self.variables.get
         }
-
+    
         async fn set_state(&self, key: String, value: T) {
             todo!()
         }
-
+    
         async fn new_task(&self, name: String, description: String) -> Task<T> {
             todo!()
         }
-
+    
         async fn load_task(&self, id: uuid::Uuid) -> Task<T> {
             todo!()
         }
-
+    
         async fn get_tasks(&self) -> Vec<Task<T>> {
             todo!()
         }
