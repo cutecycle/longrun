@@ -48,8 +48,15 @@ mod longrun {
         T: Clone + Send + Sync,
     {
         async fn get_state(&self, key: String) -> T;
-        async fn set_state(&self, key: String, value: T);
-        async fn new_task(&self, name: String, description: String) -> Task<T>;
+        async fn set_state(&mut self, key: String, value: T);
+        async fn new_task(
+            &mut self,
+            name: String,
+            description: String,
+            function_call: fn() -> T,
+        ) -> Task<T>;
+
+        // async fn add_task
 
         async fn load_task(&self, id: uuid::Uuid) -> Task<T>;
         async fn get_tasks(&self) -> Vec<Task<T>>;
@@ -80,24 +87,43 @@ mod longrun {
             return self.variables.get(&key).unwrap().clone();
         }
 
-        async fn set_state(&self, key: String, value: T) {
-            todo!()
-        }
+        // async fn set_state(mut &self, key: String, value: T) {
+        //     self.variables.insert(key, value);
+        // }
 
-        async fn new_task(&self, name: String, description: String) -> Task<T> {
-            todo!()
-        }
+        // async fn new_task(&mut self, name: String, description: String) -> Task<T> {
+
+        //     self.tasks.insert(task.id, task.clone());
+        //     return task;
+        // }
 
         async fn load_task(&self, id: uuid::Uuid) -> Task<T> {
-            todo!()
+            return self.tasks.get(&id).unwrap().clone();
         }
 
         async fn get_tasks(&self) -> Vec<Task<T>> {
-            todo!()
+            return self.tasks.values().cloned().collect();
+        }
+
+        async fn set_state(&mut self, key: String, value: T) {
+            self.variables.insert(key, value);
+        }
+
+        async fn new_task(
+            &mut self,
+            name: String,
+            description: String,
+            function_call: fn() -> T,
+        ) -> Task<T> {
+            let newId = uuid::Uuid::new_v4();
+            let task = Task::new(name, description, function_call);
+            self.tasks.insert(newId, task.clone());
+            return task;
         }
     }
 
     // pub struct value
+    #[derive(Clone)]
     pub struct Task<T> {
         name: String,
         id: uuid::Uuid,
@@ -109,6 +135,7 @@ mod longrun {
         implementation: Implementation,
     }
 
+    #[derive(Clone)]
     pub struct Implementation {
         spec_version: i32,
         operating_system: String,
