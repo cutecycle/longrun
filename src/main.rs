@@ -94,7 +94,7 @@ mod longrun {
         // async fn new_task(&mut self, name: String, description: String) -> Task<T> {
 
         //     self.tasks.insert(task.id, task.clone());
-        //     return task;
+    //     return task;
         // }
 
         async fn load_task(&self, id: uuid::Uuid) -> Task<T> {
@@ -191,12 +191,18 @@ mod longrun {
 }
 
 async fn doit() {
-    let store: InMemoryStateStore<i32> = longrun::InMemoryStateStore::new().await;
+    let mut store: InMemoryStateStore<i32> = longrun::InMemoryStateStore::new().await;
 
-    let mut task: Task<i32> = Task::new("Task1".to_string(), "This is a task".to_string(), || {
+    // let mut task: Task<i32> = Task::new("Task1".to_string(), "This is a task".to_string(), || {
+    //     println!("Task1");
+    //     return 1;
+    // });
+
+    let mut task: Task<i32> = store.new_task("Task1".to_string(), "test".to_string(), || {
         println!("Task1");
         return 1;
-    });
+    }).await;
+
 
     //print tasks
     let tasks = store.get_tasks().await;
